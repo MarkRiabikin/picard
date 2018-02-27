@@ -54,6 +54,12 @@ final htsjdkVersion = System.getProperty('htsjdk.version', '2.14.3')
 // classpath and we don't want to redistribute them in the uber jar.
 final javadocJDKFiles = files(((URLClassLoader) ToolProvider.getSystemToolClassLoader()).getURLs())
 
+configurations {
+    cloudConfiguration {
+        extendsFrom runtime
+    }
+}
+
 dependencies {
     compile('com.intel.gkl:gkl:0.8.2') {
         exclude module: 'htsjdk'
@@ -61,6 +67,9 @@ dependencies {
     compile 'com.google.guava:guava:15.0'
     compile 'com.github.samtools:htsjdk:' + htsjdkVersion
     compile 'org.broadinstitute:barclay:2.0.0'
+    configurations.cloudConfiguration {
+        compile ('com.google.cloud:google-cloud-nio:0.5.0')
+    }
 
     // javadoc utilities; compile/test only to prevent redistribution of sdk jars
     compileOnly(javadocJDKFiles)
@@ -190,6 +199,12 @@ shadowJar {
             fileName.replace(legacySourcePropertyFile, picardTargetPropertyFile)
         }
     }
+}
+
+task cloudJar(type: com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar)  {
+    configurations = [project.configurations.cloudConfiguration]
+    from project.sourceSets.main.output
+    archiveName 'picardcloud.jar'
 }
 
 // Create picardBarclay.jar, which is a identical to picard.jar, but contains a .properties
